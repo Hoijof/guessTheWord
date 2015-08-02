@@ -95,7 +95,7 @@
         inputElement = game.cache.getImage('inputContainer');
         inputElement = game.add.sprite(game.world.centerX - (inputElement.width/2), game.world.height - (inputElement.height) - 10, 'inputContainer');
 
-        bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2 - 16, 'desyrel', "TEST MESSAGE", 32);
+        bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2 - 16, 'desyrel', input, 32);
         inputElement.addChild(bmap);
 
         // CREATE THE SCORE VIEWER
