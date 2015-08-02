@@ -42,7 +42,8 @@
         player = 'undefined',
         blockManager,
         blocks,
-        input = "";
+        input = "",
+        inputElement;
 
     function preload( ) {
         // JSON
@@ -51,6 +52,7 @@
         // IMAGES
         game.load.image('background', 'assets/img/tits.jpg');
         game.load.image('player', 'assets/img/mario.png');
+        game.load.image('inputContainer', 'assets/img/rectangle03.png');
 
         // AUDIO
         game.load.audio('soundtrack', 'assets/audio/soundtrack.mp3');
@@ -85,6 +87,14 @@
         // CREATE THE GROUPS
         blocks = game.add.group();
 
+        // CREATE THE INPUT ELEMENT
+        inputElement = game.cache.getImage('inputContainer');
+        inputElement = game.add.sprite(game.world.centerX - (inputElement.width/2), game.world.height - (inputElement.height) - 10, 'inputContainer');
+
+        var bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2, 'desyrel', "TEST MESSAGE", 32);
+        inputElement.addChild(bmap);
+
+
         // LOAD THE DICTIONARY
         DICTIONARY = JSON.parse(game.cache.getText('dictionary'))[LEVEL_NAME];
 
@@ -93,23 +103,23 @@
         blockManager = new BlockManager();
         blockManager.initializeBlockGrid(NBLOCKS, game.world.height);
 
-        //  Capture all key presses
-//        var keyboard = new Phaser.Keyboard();
-//        keyboard.addKeyCapture(8);
+
         game.input.keyboard.addCallbacks(this, null, null, keyPress);
         var backspace = game.input.keyboard.addKey(Phaser.Keyboard.BACKSPACE);
-        backspace.onUp = test;
+        backspace.processKeyUp = keyPress;
 
         game.time.events.add(Phaser.Timer.SECOND * TIME_TO_SPAWN,addBlock, this);
     }
 
-    function test() {
-
-    }
     function keyPress(char) {
-        var letter = char;
-        console.log("char pressed = " + char.charCodeAt(0));
-        input += letter;
+        var letter = "";
+        if (typeof char === "object") {
+            input = input.slice(0, -1);
+        } else {
+            letter = char;
+            console.log("char pressed = " + char.charCodeAt(0));
+            input += letter;
+        }
     }
 
     function update( ) {
@@ -118,6 +128,11 @@
 
         // PHYSIC EVENTS
         game.physics.arcade.overlap(player.element, blocks, hit, null, this);
+
+        // UPDATE THE INPUT
+        inputElement.children[0].text = input;
+        inputElement.children[0].pivot.x = inputElement.children[0].width/2.0;
+        inputElement.children[0].pivot.y = inputElement.children[0].height/2.0;
     }
 
     function render () {
