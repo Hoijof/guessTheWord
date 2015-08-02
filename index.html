@@ -46,6 +46,7 @@
         blocks,
         input = "",
         inputElement,
+        scoreViewer,
         keyboardInputProcessor;
 
     function preload( ) {
@@ -65,7 +66,7 @@
     }
 
     function create( ) {
-        var music, background, playerImg;
+        var music, background, playerImg, bmap;
 
         //  We're going to be using physics, so enable the Arcade Physics system
         game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -94,8 +95,15 @@
         inputElement = game.cache.getImage('inputContainer');
         inputElement = game.add.sprite(game.world.centerX - (inputElement.width/2), game.world.height - (inputElement.height) - 10, 'inputContainer');
 
-        var bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2 - 16, 'desyrel', "TEST MESSAGE", 32);
+        bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2 - 16, 'desyrel', "TEST MESSAGE", 32);
         inputElement.addChild(bmap);
+
+        // CREATE THE SCORE VIEWER
+        scoreViewer = game.cache.getImage('inputContainer');
+        scoreViewer = game.add.sprite(game.world.width - (scoreViewer.width), 0, 'inputContainer');
+
+        bmap = game.add.bitmapText(scoreViewer.width/2, scoreViewer.height/2 - 16, 'desyrel', player.score, 32);
+        scoreViewer.addChild(bmap);
 
 
         // LOAD THE DICTIONARY
@@ -121,11 +129,13 @@
         } else if (char.charCodeAt(0) === 13) { // Enter
             if (keyboardInputProcessor.parseInput(input)) {
                 player.score += SCORE_PER_MATCH;
+                scoreViewer.children[0].text = player.score;
                 input = "";
             }
         } else {
             input += char;
         }
+        inputElement.children[0].text = input;
     }
 
     function update( ) {
@@ -136,7 +146,6 @@
         game.physics.arcade.overlap(player.element, blocks, hit, null, this);
 
         // UPDATE THE INPUT
-        inputElement.children[0].text = input;
         inputElement.children[0].pivot.x = inputElement.children[0].width/2.0;
     }
 

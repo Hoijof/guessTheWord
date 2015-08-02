@@ -1,6 +1,5 @@
-function Block(blockGridId, id) {
+function Block(blockGridId) {
     var value = this.getRandomValue();
-    this.id = id;
     this.blockGridId = blockGridId;
     this.text = value[0];
     this.answer = value[1];

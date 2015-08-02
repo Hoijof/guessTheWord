@@ -4,17 +4,19 @@ function KeyboardInput(game, blockManager) {
 }
 
 KeyboardInput.prototype.parseInput = function(input) {
-    var found = false;
+    var found = false,
+        blockId;
+
     this.blockManager.blockGrids.forEach(function (blockGrid) {
         if (found) return;
-        blockGrid.blocks.forEach(function(block) {
+        for (blockId in blockGrid.blocks) {
             if (found) return;
-            if (block.answer == input) {
-                block.destroy();
-                blockGrid.blocks.splice(block.id, 1);
+            if (blockGrid.blocks[blockId].answer == input) {
+                blockGrid.blocks[blockId].destroy();
+                blockGrid.blocks.splice(blockId, 1);
                 found = true;
             }
-        })
+        }
     });
     return found;
 };
