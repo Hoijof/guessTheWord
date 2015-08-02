@@ -21,6 +21,8 @@
 
 <script type="text/javascript">
 
+    // TAKE A LOOK AT THIS http://phaser.io/examples/v2/input/word-input
+
     function object(o) {
         function F() {}
         F.prototype = o;
@@ -29,6 +31,7 @@
 
     var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update , render: render}),
         NBLOCKS = 4,
+        DEBUG = false,
         TIME_TO_SPAWN = 2,
         PLAYER_LIVES = 3,
         BLOCK_VELOCITY = 50,
@@ -38,7 +41,8 @@
         LEVEL_NAME = 'easy',
         player = 'undefined',
         blockManager,
-        blocks;
+        blocks,
+        input = "";
 
     function preload( ) {
         // JSON
@@ -89,7 +93,23 @@
         blockManager = new BlockManager();
         blockManager.initializeBlockGrid(NBLOCKS, game.world.height);
 
+        //  Capture all key presses
+//        var keyboard = new Phaser.Keyboard();
+//        keyboard.addKeyCapture(8);
+        game.input.keyboard.addCallbacks(this, null, null, keyPress);
+        var backspace = game.input.keyboard.addKey(Phaser.Keyboard.BACKSPACE);
+        backspace.onUp = test;
+
         game.time.events.add(Phaser.Timer.SECOND * TIME_TO_SPAWN,addBlock, this);
+    }
+
+    function test() {
+
+    }
+    function keyPress(char) {
+        var letter = char;
+        console.log("char pressed = " + char.charCodeAt(0));
+        input += letter;
     }
 
     function update( ) {
@@ -101,7 +121,9 @@
     }
 
     function render () {
-        game.debug.body(player.element);
+        if (DEBUG == true) {
+            game.debug.body(player.element);
+        }
     }
 
     function hit(body1, body2) {
