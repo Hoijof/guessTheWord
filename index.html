@@ -91,7 +91,7 @@
         inputElement = game.cache.getImage('inputContainer');
         inputElement = game.add.sprite(game.world.centerX - (inputElement.width/2), game.world.height - (inputElement.height) - 10, 'inputContainer');
 
-        var bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2, 'desyrel', "TEST MESSAGE", 32);
+        var bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2 - 16, 'desyrel', "TEST MESSAGE", 32);
         inputElement.addChild(bmap);
 
 
@@ -132,7 +132,6 @@
         // UPDATE THE INPUT
         inputElement.children[0].text = input;
         inputElement.children[0].pivot.x = inputElement.children[0].width/2.0;
-        inputElement.children[0].pivot.y = inputElement.children[0].height/2.0;
     }
 
     function render () {
