@@ -31,12 +31,15 @@
     }
 
     var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update , render: render}),
-        NBLOCKS = 4,
+        NBLOCKS = 5,
         DEBUG = false,
-        TIME_TO_SPAWN = 2,
+        TIME_TO_SPAWN = 1,
         PLAYER_LIVES = 3,
-        BLOCK_VELOCITY = 30,
+        BLOCK_VELOCITY = 40,
         SPEED = 1,
+        TOP_WORLD_MARGIN = 60,
+        BOTTOM_WORLD_MARGIN = 60,
+
         score = 0,
         DICTIONARY = [],
         LEVEL_NAME = 'easy',
@@ -47,7 +50,8 @@
         input = "",
         inputElement,
         scoreViewer,
-        keyboardInputProcessor;
+        keyboardInputProcessor,
+        playerLifes = [];
 
     function preload( ) {
         // JSON
@@ -57,6 +61,7 @@
         game.load.image('background', 'assets/img/tits.jpg');
         game.load.image('player', 'assets/img/mario.png');
         game.load.image('inputContainer', 'assets/img/rectangle03.png');
+        game.load.image('life', 'assets/img/life.png');
 
         // AUDIO
         game.load.audio('soundtrack', 'assets/audio/soundtrack.mp3');
@@ -66,7 +71,7 @@
     }
 
     function create( ) {
-        var music, background, playerImg, bmap;
+        var music, background, playerImg, bmap, heart, i;
 
         //  We're going to be using physics, so enable the Arcade Physics system
         game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -105,6 +110,12 @@
         bmap = game.add.bitmapText(scoreViewer.width/2, scoreViewer.height/2 - 16, 'desyrel', player.score, 32);
         scoreViewer.addChild(bmap);
 
+        // CREATE THE PLAYER LIFES
+        heart = game.cache.getImage('life');
+        for (i = 0; i < PLAYER_LIVES; i++) {
+            playerLifes.push(game.add.sprite(game.world.centerX - (heart.width)*0.05, 0, 'life'));
+            playerLifes[i].scale.setTo(0.05, 0.05);
+        }
 
         // LOAD THE DICTIONARY
         DICTIONARY = JSON.parse(game.cache.getText('dictionary'))[LEVEL_NAME];
@@ -112,7 +123,7 @@
 
         // INIT THE LOGIC
         blockManager = new BlockManager();
-        blockManager.initializeBlockGrid(NBLOCKS, game.world.height);
+        blockManager.initializeBlockGrid(NBLOCKS, game.world.height - TOP_WORLD_MARGIN - BOTTOM_WORLD_MARGIN);
 
 
         game.input.keyboard.addCallbacks(this, null, null, keyPress);
@@ -156,10 +167,10 @@
     }
 
     function hit(body1, body2) {
-        console.log ("one live less!");
         player.lives--;
+
         if (player.lives == 0) {
-            console.log ("You dieded");
+            alert("HAHAHAHHAHAA, LOSER.");
         }
         body2.destroy();
     }
@@ -167,7 +178,7 @@
     function addBlock() {
         var block = blockManager.addBlock();
 
-        block.element = game.add.bitmapText(0, blockManager.blockGrids[block.blockGridId].position, 'desyrel', block.text, 32);
+        block.element = game.add.bitmapText(0, blockManager.blockGrids[block.blockGridId].position + TOP_WORLD_MARGIN, 'desyrel', block.text, 32);
         game.physics.arcade.enable(block.element);
         block.element.body.velocity.setTo(BLOCK_VELOCITY, 0);
 
