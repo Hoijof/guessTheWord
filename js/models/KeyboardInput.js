@@ -7,7 +7,7 @@ KeyboardInput.prototype.parseInput = function(input) {
     var found = false,
         blockId;
 
-    this.blockManager.blockGrids.forEach(function (blockGrid) {
+    this.blockManager.blockGrids.forEach(function (blockGrid) { // TODO: navigate by columns, not by rows
         if (found) return;
         for (blockId in blockGrid.blocks) {
             if (found) return;
