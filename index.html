@@ -69,6 +69,7 @@
 
         // FONTS
         game.load.bitmapFont('desyrel', 'assets/bitmapFonts/desyrel.png', 'assets/bitmapFonts/desyrel.xml');
+        game.load.bitmapFont('desyrelPink', 'assets/bitmapFonts/desyrel-pink.png', 'assets/bitmapFonts/desyrel-pink.xml');
     }
 
     function create( ) {
@@ -101,14 +102,14 @@
         inputElement = game.cache.getImage('inputContainer');
         inputElement = game.add.sprite(game.world.centerX - (inputElement.width/2), game.world.height - (inputElement.height) - 10, 'inputContainer');
 
-        bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2 - 16, 'desyrel', input, 32);
+        bmap = game.add.bitmapText(inputElement.width/2, inputElement.height/2 - 16, 'desyrelPink', input, 32);
         inputElement.addChild(bmap);
 
         // CREATE THE SCORE VIEWER
         scoreViewer = game.cache.getImage('scoreBoard');
         scoreViewer = game.add.sprite(game.world.width - (scoreViewer.width), 0, 'scoreBoard'); //TODO mirar porque se esta sobreescribiendo la variable scoreViewer
 
-        bmap = game.add.bitmapText(scoreViewer.width/2, scoreViewer.height/2 - 16, 'desyrel', player.score, 32);
+        bmap = game.add.bitmapText(scoreViewer.width/2, scoreViewer.height/2 - 16, 'desyrelPink', player.score, 32);
         scoreViewer.addChild(bmap);
 
         // CREATE THE PLAYER LIVES
