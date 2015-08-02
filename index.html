@@ -130,8 +130,8 @@
             if (keyboardInputProcessor.parseInput(input)) {
                 player.score += SCORE_PER_MATCH;
                 scoreViewer.children[0].text = player.score;
-                input = "";
             }
+            input = "";
         } else {
             input += char;
         }
