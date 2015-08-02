@@ -11,7 +11,7 @@ KeyboardInput.prototype.parseInput = function(input) {
             if (found) return;
             if (block.answer == input) {
                 block.destroy();
-                blockGrid.blocks[block.id] = undefined;
+                blockGrid.blocks.splice(block.id, 1);
                 found = true;
             }
         })

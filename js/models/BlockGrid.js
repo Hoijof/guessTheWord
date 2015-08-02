@@ -6,7 +6,7 @@ function BlockGrid(id, position){
 }
 
 BlockGrid.prototype.addBlock = function() {
-    var block = new Block(this.id);
+    var block = new Block(this.id, this.blocks.length);
     this.blocks.push(block);
 
     return block;
