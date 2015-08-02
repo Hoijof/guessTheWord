@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Ajedrez</title>
-    <script type="text/javascript" src="js/require.js"></script>
-    <script type="text/javascript" src="js/phaser.min.js"></script>
-    <script type="text/javascript" src="js/chess.js"></script>
+    <title>Word Guesser</title>
+    <script type="text/javascript" src="lib/js/require.js"></script>
+    <script type="text/javascript" src="lib/js/phaser.min.js"></script>
+
+    <!-- OUR INCLUDES! -->
+    <script type="text/javascript" src="js/models/Block.js"></script>
+    <script type="text/javascript" src="js/models/BlockGrid.js"></script>
+    <script type="text/javascript" src="js/models/BlockManager.js"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -17,331 +21,92 @@
 <script type="text/javascript">
 
     // Initialize chess js
+    function object(o) {
+        function F() {}
+        F.prototype = o;
+        return new F();
+    }
 
-    var chess = new Chess();
-    //chess.move({ from: 'g2', to: 'g3' });
-    /*var wewef = chess.history();
-     console.log(wewef)*/
-
-    /*var pgn = ['[Event "Casual Game"]',
-     '[Site "Berlin GER"]',
-     '[Date "1852.??.??"]',
-     '[EventDate "?"]',
-     '[Round "?"]',
-     '[Result "1-0"]',
-     '[White "Adolf Anderssen"]',
-     '[Black "Jean Dufresne"]',
-     '[ECO "C52"]',
-     '[WhiteElo "?"]',
-     '[BlackElo "?"]',
-     '[PlyCount "47"]',
-     '',
-     '1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.b4 Bxb4 5.c3 Ba5 6.d4 exd4 7.O-O',
-     'd3 8.Qb3 Qf6 9.e5 Qg6 10.Re1 Nge7 11.Ba3 b5 12.Qxb5 Rb8 13.Qa4',
-     'Bb6 14.Nbd2 Bb7 15.Ne4 Qf5 16.Bxd3 Qh5 17.Nf6+ gxf6 18.exf6',
-     'Rg8 19.Rad1 Qxf3 20.Rxe7+ Nxe7 21.Qxd7+ Kxd7 22.Bf5+ Ke8',
-     '23.Bd7+ Kf8 24.Bxe7# 1-0'];
-     chess.load_pgn(pgn.join('\n'));
-     var moveHistory = chess.history({ verbose: true });
-     var i = 1;
-
-     while (moveHistory.length > 0) {
-     var p1Move = moveHistory.shift(),
-     p2Move = moveHistory.shift(),
-     p1c = p1Move.from + '-' + p1Move.to,
-     p2c = (p2Move == undefined) ? '' : p2Move.from + '-' + p2Move.to;
-     console.log(i + '. ' + p1c + ' ' + p2c );
-     i++;
-     }*/
-
-
-
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+    var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update , render: render}),
+        blockManager,
+            NBLOCKS = 4,
+            SPEED = 1,
+            score = 0,
+            DICTIONARY = [],
+            player = 'undefined',
+            TIME_TO_SPAWN = 2,
+            BLOCK_VELOCITY = 20;
 
     function preload( ) {
 
-        game.load.image('chessboard', 'assets/chessboard.jpg');
-        game.load.image('chessPieces', 'assets/chess_pieces.png');
-        game.load.image('blackCube', 'assets/cube.png');
-        game.load.image('whiteCube', 'assets/whiteCube.png');
-        game.load.image('sky', 'assets/sky.png');
+        // JSON
+        game.load.text('dictionary', 'assets/json/data.json');
 
-        // Chess pieces
-        game.load.image('black_bishop', 'assets/chessPieces/black_bishop.png');
-        game.load.image('black_knight', 'assets/chessPieces/black_knight.png');
-        game.load.image('black_king', 'assets/chessPieces/black_king.png');
-        game.load.image('black_pawn', 'assets/chessPieces/black_pawn.png');
-        game.load.image('black_queen', 'assets/chessPieces/black_queen.png');
-        game.load.image('black_tower', 'assets/chessPieces/black_tower.png');
-        game.load.image('white_bishop', 'assets/chessPieces/white_bishop.png');
-        game.load.image('white_knight', 'assets/chessPieces/white_knight.png');
-        game.load.image('white_king', 'assets/chessPieces/white_king.png');
-        game.load.image('white_pawn', 'assets/chessPieces/white_pawn.png');
-        game.load.image('white_queen', 'assets/chessPieces/white_queen.png');
-        game.load.image('white_tower', 'assets/chessPieces/white_tower.png');
+        // IMAGES
+        game.load.image('background', 'assets/img/tits.jpg');
+        game.load.image('player', 'assets/img/mario.png');
 
+
+        // AUDIO
+        game.load.audio('soundtrack', ['assets/audio/soundtrack.mp3']);
+
+        // FONTS
+        game.load.bitmapFont('desyrel', 'assets/bitmapFonts/desyrel.png', 'assets/bitmapFonts/desyrel.xml');
     }
 
-    var board       = 'undefined';
-    var pieces      = 'undefined';
-    var cubes       = 'undefined';
-    var player      = 'undefined';
-    var platforms   = 'undefined';
-    var cursors     = 'undefined';
-    var rect        = 'undefined';
-    var arrayCubes  = {};
-    var piecesByPos = {};
-    //var positions = [];
-
     function create( ) {
+        var music, background, player;
 
         //  We're going to be using physics, so enable the Arcade Physics system
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        //  A simple background
-        game.add.sprite(0, 0, 'sky');
+        // Start the music
+        music = game.add.audio('soundtrack');
+        music.play();
 
-        var boardImage = game.cache.getImage('chessboard');
+        background = game.cache.getImage('background');
+        game.add.sprite(game.world.centerX - (background.width/2), game.world.centerY - (background.height/2), 'background');
 
-        board = game.add.sprite(game.world.centerX - (boardImage.width/2)*0.45, game.world.centerY - (boardImage.height/2)*0.45, 'chessboard');
+        // Add the player
+        player = game.cache.getImage('player');
+        player = game.add.sprite(game.world.width - (player.width)*0.1, game.world.centerY - (player.height/2)*0.1, 'player');
+        player.scale.setTo(0.1, 0.1);
 
-        board.scale.setTo(0.45, 0.45);
+        // LOAD THE DICTIONARY
+        DICTIONARY = JSON.parse(game.cache.getText('dictionary')).easy;
 
-        // Declare left top of board
-        var initPosBoardX = 160;
-        var initPosBoardY = 60;
 
-        //Piece width and height
-        var pieceWidth = 60;
-        var pieceHeight = 60;
+        // INIT THE LOGIC
 
-        // Type of cubes
-        var cubeType = { 0: 'blackCube', 1: 'whiteCube' };
+        blockManager = new BlockManager();
+        blockManager.initializeBlockGrid(NBLOCKS, game.world.height);
 
-        var letterACode = 97;
-        var position;
-
-        var arrayPosition = [8,7,6,5,4,3,2,1];
-
-        // Print board
-        cubes = game.add.group();
-        var currentCube;
-        for( var x = 0; x <= 7; x++ ){
-            for( var y = 0; y <= 7; y++ ){
-                currentCube = (x + y) % 2;
-                // Add position property to cube sprite
-                var xPos = arrayPosition[y];
-                position = String.fromCharCode(letterACode+x) + xPos;
-                arrayCubes[position] = cubes.create(initPosBoardX+(x*60), initPosBoardY+(y*60), cubeType[currentCube]);
-                arrayCubes[position].pos = position;
-                arrayCubes[position].inputEnabled = true;
-            }
-        }
-
-        //Print pieces
-        var piece;
-
-        pieces = game.add.group(); //Create pieces group
-        //Add all pieces to group
-        piecesByPos['a8'] = pieces.create(initPosBoardX, initPosBoardY, 'black_tower');
-        piecesByPos['a8'].currentPos = 'a8';
-        piecesByPos['b8'] = pieces.create(initPosBoardX+(pieceWidth), initPosBoardY, 'black_knight');
-        piecesByPos['b8'].currentPos = 'b8';
-        piecesByPos['c8'] = pieces.create(initPosBoardX+(pieceWidth*2), initPosBoardY, 'black_bishop');
-        piecesByPos['c8'].currentPos = 'c8';
-        piecesByPos['d8'] = pieces.create(initPosBoardX+(pieceWidth*3), initPosBoardY, 'black_queen');
-        piecesByPos['d8'].currentPos = 'd8';
-        piecesByPos['e8'] = pieces.create(initPosBoardX+(pieceWidth*4), initPosBoardY, 'black_king');
-        piecesByPos['e8'].currentPos = 'e8';
-        piecesByPos['f8'] = pieces.create(initPosBoardX+(pieceWidth*5), initPosBoardY, 'black_bishop');
-        piecesByPos['f8'].currentPos = 'f8';
-        piecesByPos['g8'] = pieces.create(initPosBoardX+(pieceWidth*6), initPosBoardY, 'black_knight');
-        piecesByPos['g8'].currentPos = 'g8';
-        piecesByPos['h8'] = pieces.create(initPosBoardX+(pieceWidth*7), initPosBoardY, 'black_tower');
-        piecesByPos['h8'].currentPos = 'h8';
-        for( x = 0; x <= 7; x++ ){ // print all pawns
-            position = String.fromCharCode(letterACode+x) + '7';
-            piecesByPos[position] = pieces.create(initPosBoardX+(x*pieceHeight), initPosBoardY+pieceWidth, 'black_pawn');
-            piecesByPos[position].currentPos = position;
-        }
-
-        piecesByPos['a1'] = pieces.create(initPosBoardX, initPosBoardY+(pieceHeight*7), 'white_tower');
-        piecesByPos['a1'].currentPos = 'a1';
-        piecesByPos['b1'] = pieces.create(initPosBoardX+(pieceWidth), initPosBoardY+(pieceHeight*7), 'white_knight');
-        piecesByPos['b1'].currentPos = 'b1';
-        piecesByPos['c1'] = pieces.create(initPosBoardX+(pieceWidth*2), initPosBoardY+(pieceHeight*7), 'white_bishop');
-        piecesByPos['c1'].currentPos = 'c1';
-        piecesByPos['d1'] = pieces.create(initPosBoardX+(pieceWidth*3), initPosBoardY+(pieceHeight*7), 'white_queen');
-        piecesByPos['d1'].currentPos = 'd1';
-        piecesByPos['e1'] = pieces.create(initPosBoardX+(pieceWidth*4), initPosBoardY+(pieceHeight*7), 'white_king');
-        piecesByPos['e1'].currentPos = 'e1';
-        piecesByPos['f1'] = pieces.create(initPosBoardX+(pieceWidth*5), initPosBoardY+(pieceHeight*7), 'white_bishop');
-        piecesByPos['f1'].currentPos = 'f1';
-        piecesByPos['g1'] = pieces.create(initPosBoardX+(pieceWidth*6), initPosBoardY+(pieceHeight*7), 'white_knight');
-        piecesByPos['g1'].currentPos = 'g1';
-        piecesByPos['h1'] = pieces.create(initPosBoardX+(pieceWidth*7), initPosBoardY+(pieceHeight*7), 'white_tower');
-        piecesByPos['h1'].currentPos = 'h1';
-        for( x = 0; x <= 7; x++ ){ // print all pawns
-            position = String.fromCharCode(letterACode+x) + '2';
-            piecesByPos[position] = pieces.create(initPosBoardX+(x*pieceHeight), initPosBoardY+(pieceHeight*6), 'white_pawn');
-            piecesByPos[position].currentPos = position;
-        }
-
-        // Bind callback on drag start and stop events
-        pieces.children.forEach(function( piece ){
-            piece.inputEnabled = true;
-            piece.input.enableDrag();
-            piece.events.onDragStop.add(stopDrag, this);
-            piece.events.onDragStart.add(initDrag, this);
-            delete piece.oldPosition;
-        });
-
+        game.time.events.add(Phaser.Timer.SECOND * TIME_TO_SPAWN,addBlock, this);
     }
 
     function update( ) {
-        /*if( chess.game_over() ){
-         console.log('juego terminado')
-         }*/
+        // Update the times since last block
+        blockManager.updateTimes();
 
     }
 
-    function initDrag( sprite )
-    {
-        sprite.oldPositionf = sprite.position.clone();
-        var currentPos = sprite.currentPos;
-        var enabledMoves = chess.moves({square: currentPos});
-        enabledMoves.forEach(function( enabledMove ){
-            var parsedMove = enabledMove.slice(-2);
-            //animateCubes(arrayCubes[parsedMove]); //TODO comprobar animaciones
-        });
-    }
-
-    function stopDrag( sprite )
-    {
-        var currentPos = sprite.currentPos;
-        var enabledMoves = chess.moves({square: currentPos, verbose: true});
-        var foundPosition = enabledMoves.some(function( enabledMove ){ //Each possible moves
-            var distance = game.physics.arcade.distanceBetween(sprite, arrayCubes[enabledMove.to]);
-            if( distance < 30 ){ // If drop piece on possible place
-                movePiece(currentPos, enabledMove.to);
-
-                window.setTimeout(makeRandomMove, 350);
-
-                return true;
-            }
-        });
-
-        if( !foundPosition ){
-            sprite.x = sprite.oldPositionf.x;
-            sprite.y = sprite.oldPositionf.y;
-        }
-
-        /*if(foundPosition){
-
-         }*/
+    function render () {
 
     }
+    function addBlock() {
+        var block = blockManager.addBlock();
 
-    /**
-     * Check if sprite a overlaps sprite b
-     *
-     * @param spriteA
-     * @param spriteB
-     */
-    function checkOverlap(spriteA, spriteB) {
+        var element = game.add.bitmapText(0, blockManager.blockGrids[block.blockGridId].position, 'desyrel', block.text, 32);
+        game.physics.arcade.enable(element);
+        element.body.velocity.setTo(BLOCK_VELOCITY, 0);
 
-        var boundsA = spriteA.getBounds();
-        var boundsB = spriteB.getBounds();
+        block.element = element;
 
-        return Phaser.Rectangle.intersects(boundsA, boundsB);
+        blockManager.blockGrids[block.blockGridId].timeSinceLastBlock = 0;
 
+        game.time.events.add(Phaser.Timer.SECOND * TIME_TO_SPAWN, addBlock, this);
     }
 
-    /**
-     * Blink animation for enabled moves on board
-     *
-     * @param cubeSprite
-     */
-    function animateCubes( cubeSprite )
-    {
-        this.game.add.tween(cubeSprite)
-                .to({ alpha: 0.5 }, 800, Phaser.Easing.Bounce.Out)
-                .to({ alpha: 1.0 }, 800, Phaser.Easing.Bounce.Out)
-                .to({ alpha: 0.5 }, 800, Phaser.Easing.Bounce.Out)
-                .to({ alpha: 1.0 }, 800, Phaser.Easing.Bounce.Out)
-                .start();
-    }
-
-    /**
-     * Make random move of computer side
-     *
-     */
-    function makeRandomMove ()
-    {
-        var possibleMoves = chess.moves({ verbose: true });
-
-        // Check game over
-        if (possibleMoves.length === 0) return; // TODO finalizar juego
-
-        //var randomIndex = Math.floor(Math.random() * possibleMoves.length); // Select random movement
-        var movement = selectBestMovement(possibleMoves);
-
-        var from = movement.from;
-        var to = movement.to;
-
-        movePiece(from, to);
-    }
-
-    /**
-     * Make piece movement from to ( position )
-     *
-     * @param from
-     * @param to
-     */
-    function movePiece( from, to )
-    {
-        if( typeof piecesByPos[to] !== 'undefined' ){ // If destination pos is not empty, remove sprite
-            piecesByPos[to].destroy();
-        }
-
-        // Set new piece position
-        piecesByPos[from].x = arrayCubes[to].x;
-        piecesByPos[from].y = arrayCubes[to].y;
-
-        piecesByPos[to] = piecesByPos[from]; // Override piece position
-
-        delete piecesByPos[from]; // Delete old reference
-        //console.log(piecesByPos[to])
-        piecesByPos[to].currentPos = to;
-
-        chess.move({from: from, to: to}); //Make movement on chess js
-
-    }
-
-    /**
-     * Select best movement from possibles movements.
-     * For now select movement if
-     *
-     * @param enabledMoves
-     */
-    function selectBestMovement( enabledMoves )
-    {
-        var resMove;
-        var foundMovement = enabledMoves.some(function( enabledMove ) { //Each possible moves
-
-            var to = enabledMove.to;
-            if( typeof piecesByPos[to] !== 'undefined' ){
-                console.log('posible comer')
-                resMove = enabledMove;
-                return true;
-            }
-        });
-        if ( !foundMovement ){
-            var randomIndex = Math.floor(Math.random() * enabledMoves.length); // Select random movement
-            resMove = enabledMoves[randomIndex];
-        }
-        return resMove;
-    }
 
 </script>
 
