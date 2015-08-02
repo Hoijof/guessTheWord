@@ -11,3 +11,7 @@ function Block(blockGridId) {
 Block.prototype.getRandomValue = function() {
     return DICTIONARY[Math.floor(Math.random() * DICTIONARY.length)];
 };
+
+Block.prototype.destroy = function() {
+    this.element.destroy();
+};

@@ -11,6 +11,7 @@
     <script type="text/javascript" src="js/models/BlockGrid.js"></script>
     <script type="text/javascript" src="js/models/BlockManager.js"></script>
     <script type="text/javascript" src="js/models/Player.js"></script>
+    <script type="text/javascript" src="js/models/KeyboardInput.js"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -39,11 +40,13 @@
         score = 0,
         DICTIONARY = [],
         LEVEL_NAME = 'easy',
+        SCORE_PER_MATCH = 100,
         player = 'undefined',
         blockManager,
         blocks,
         input = "",
-        inputElement;
+        inputElement,
+        keyboardInputProcessor;
 
     function preload( ) {
         // JSON
@@ -107,18 +110,21 @@
         game.input.keyboard.addCallbacks(this, null, null, keyPress);
         var backspace = game.input.keyboard.addKey(Phaser.Keyboard.BACKSPACE);
         backspace.processKeyUp = keyPress;
+        keyboardInputProcessor = new KeyboardInput(game, blockManager);
 
         game.time.events.add(Phaser.Timer.SECOND * TIME_TO_SPAWN,addBlock, this);
     }
 
     function keyPress(char) {
-        var letter = "";
-        if (typeof char === "object") {
+        if (typeof char === "object") { // Probably backspace
             input = input.slice(0, -1);
+        } else if (char.charCodeAt(0) === 13) { // Enter
+            if (keyboardInputProcessor.parseInput(input)) {
+                player.score += SCORE_PER_MATCH;
+                input = "";
+            }
         } else {
-            letter = char;
-            console.log("char pressed = " + char.charCodeAt(0));
-            input += letter;
+            input += char;
         }
     }
 
