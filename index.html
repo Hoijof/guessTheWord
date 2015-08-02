@@ -109,7 +109,7 @@
         scoreViewer = game.cache.getImage('scoreBoard');
         scoreViewer = game.add.sprite(game.world.width - (scoreViewer.width), 0, 'scoreBoard'); //TODO mirar porque se esta sobreescribiendo la variable scoreViewer
 
-        bmap = game.add.bitmapText(scoreViewer.width/2, scoreViewer.height/2 - 20, 'desyrelPink', player.score, 32);
+        bmap = game.add.bitmapText(scoreViewer.width/2, scoreViewer.height/2 - 23, 'desyrelPink', player.score, 32);
         scoreViewer.addChild(bmap);
 
         // CREATE THE PLAYER LIVES
