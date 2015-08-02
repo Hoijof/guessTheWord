@@ -10,6 +10,7 @@
     <script type="text/javascript" src="js/models/Block.js"></script>
     <script type="text/javascript" src="js/models/BlockGrid.js"></script>
     <script type="text/javascript" src="js/models/BlockManager.js"></script>
+    <script type="text/javascript" src="js/models/Player.js"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -20,7 +21,6 @@
 
 <script type="text/javascript">
 
-    // Initialize chess js
     function object(o) {
         function F() {}
         F.prototype = o;
@@ -28,17 +28,19 @@
     }
 
     var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update , render: render}),
+        NBLOCKS = 4,
+        TIME_TO_SPAWN = 2,
+        PLAYER_LIVES = 3,
+        BLOCK_VELOCITY = 50,
+        SPEED = 1,
+        score = 0,
+        DICTIONARY = [],
+        LEVEL_NAME = 'easy',
+        player = 'undefined',
         blockManager,
-            NBLOCKS = 4,
-            SPEED = 1,
-            score = 0,
-            DICTIONARY = [],
-            player = 'undefined',
-            TIME_TO_SPAWN = 2,
-            BLOCK_VELOCITY = 20;
+        blocks;
 
     function preload( ) {
-
         // JSON
         game.load.text('dictionary', 'assets/json/data.json');
 
@@ -46,16 +48,15 @@
         game.load.image('background', 'assets/img/tits.jpg');
         game.load.image('player', 'assets/img/mario.png');
 
-
         // AUDIO
-        game.load.audio('soundtrack', ['assets/audio/soundtrack.mp3']);
+        game.load.audio('soundtrack', 'assets/audio/soundtrack.mp3');
 
         // FONTS
         game.load.bitmapFont('desyrel', 'assets/bitmapFonts/desyrel.png', 'assets/bitmapFonts/desyrel.xml');
     }
 
     function create( ) {
-        var music, background, player;
+        var music, background, playerImg;
 
         //  We're going to be using physics, so enable the Arcade Physics system
         game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -68,16 +69,23 @@
         game.add.sprite(game.world.centerX - (background.width/2), game.world.centerY - (background.height/2), 'background');
 
         // Add the player
-        player = game.cache.getImage('player');
-        player = game.add.sprite(game.world.width - (player.width)*0.1, game.world.centerY - (player.height/2)*0.1, 'player');
-        player.scale.setTo(0.1, 0.1);
+        playerImg = game.cache.getImage('player');
+        playerImg = game.add.sprite(game.world.width - (playerImg.width)*0.1, game.world.centerY - (playerImg.height/2)*0.1, 'player');
+        playerImg.scale.setTo(0.1, 0.1);
+
+        player = new Player(PLAYER_LIVES, playerImg);
+        game.physics.arcade.enable(player.element);
+        player.element.body.offset.y = -(game.world.height/2) + playerImg.height/2;
+        player.element.body.height = game.world.height;
+
+        // CREATE THE GROUPS
+        blocks = game.add.group();
 
         // LOAD THE DICTIONARY
-        DICTIONARY = JSON.parse(game.cache.getText('dictionary')).easy;
+        DICTIONARY = JSON.parse(game.cache.getText('dictionary'))[LEVEL_NAME];
 
 
         // INIT THE LOGIC
-
         blockManager = new BlockManager();
         blockManager.initializeBlockGrid(NBLOCKS, game.world.height);
 
@@ -88,19 +96,31 @@
         // Update the times since last block
         blockManager.updateTimes();
 
+        // PHYSIC EVENTS
+        game.physics.arcade.overlap(player.element, blocks, hit, null, this);
     }
 
     function render () {
-
+        game.debug.body(player.element);
     }
+
+    function hit(body1, body2) {
+        console.log ("one live less!");
+        player.lives--;
+        if (player.lives == 0) {
+            console.log ("You dieded");
+        }
+        body2.destroy();
+    }
+
     function addBlock() {
         var block = blockManager.addBlock();
 
-        var element = game.add.bitmapText(0, blockManager.blockGrids[block.blockGridId].position, 'desyrel', block.text, 32);
-        game.physics.arcade.enable(element);
-        element.body.velocity.setTo(BLOCK_VELOCITY, 0);
+        block.element = game.add.bitmapText(0, blockManager.blockGrids[block.blockGridId].position, 'desyrel', block.text, 32);
+        game.physics.arcade.enable(block.element);
+        block.element.body.velocity.setTo(BLOCK_VELOCITY, 0);
 
-        block.element = element;
+        blocks.add(block.element);
 
         blockManager.blockGrids[block.blockGridId].timeSinceLastBlock = 0;
 
