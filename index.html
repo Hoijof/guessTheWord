@@ -60,8 +60,9 @@
         // IMAGES
         game.load.image('background', 'assets/img/tits.jpg');
         game.load.image('player', 'assets/img/mario.png');
-        game.load.image('inputContainer', 'assets/img/rectangle03.png');
+        game.load.image('inputContainer', 'assets/img/board.png');
         game.load.image('life', 'assets/img/life.png');
+        game.load.image('scoreBoard', 'assets/img/scoreBoard.png');
 
         // AUDIO
         game.load.audio('soundtrack', 'assets/audio/soundtrack.mp3');
@@ -104,8 +105,8 @@
         inputElement.addChild(bmap);
 
         // CREATE THE SCORE VIEWER
-        scoreViewer = game.cache.getImage('inputContainer');
-        scoreViewer = game.add.sprite(game.world.width - (scoreViewer.width), 0, 'inputContainer');
+        scoreViewer = game.cache.getImage('scoreBoard');
+        scoreViewer = game.add.sprite(game.world.width - (scoreViewer.width), 0, 'scoreBoard'); //TODO mirar porque se esta sobreescribiendo la variable scoreViewer
 
         bmap = game.add.bitmapText(scoreViewer.width/2, scoreViewer.height/2 - 16, 'desyrel', player.score, 32);
         scoreViewer.addChild(bmap);
